@@ -1,0 +1,119 @@
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Date;
+
+public class SqlResponseDtoTest {
+    private SqlResponseDto sqlResponseDto;
+
+    @Before
+    public void setUp() {
+        sqlResponseDto = new SqlResponseDto();
+    }
+
+    @Test
+    public void testDbNameProperty() {
+        String expected = "TestDbName";
+        sqlResponseDto.setDbName(expected);
+        String actual = sqlResponseDto.getDbName();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGaldProperty() {
+        String expected = "TestGald";
+        sqlResponseDto.setGald(expected);
+        String actual = sqlResponseDto.getGald();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testIndIdProperty() {
+        String expected = "TestIndId";
+        sqlResponseDto.setIndId(expected);
+        String actual = sqlResponseDto.getIndId();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testSdioldProperty() {
+        String expected = "TestSdiold";
+        sqlResponseDto.setSdiold(expected);
+        String actual = sqlResponseDto.getSdiold();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testProdSubtypeProperty() {
+        String expected = "TestProdSubtype";
+        sqlResponseDto.setProdSubtype(expected);
+        String actual = sqlResponseDto.getProdSubtype();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testRiderCodeProperty() {
+        String expected = "TestRiderCode";
+        sqlResponseDto.setRiderCode(expected);
+        String actual = sqlResponseDto.getRiderCode();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testSsnProperty() {
+        String expected = "123-45-6789";
+        sqlResponseDto.setSsn(expected);
+        String actual = sqlResponseDto.getSsn();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testGcIdProperty() {
+        String expected = "TestGcId";
+        sqlResponseDto.setGcId(expected);
+        String actual = sqlResponseDto.getGcId();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPlanNameProperty() {
+        String expected = "TestPlanName";
+        sqlResponseDto.setPlanName(expected);
+        String actual = sqlResponseDto.getPlanName();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testLastNameProperty() {
+        String expected = "Doe";
+        sqlResponseDto.setLastName(expected);
+        String actual = sqlResponseDto.getLastName();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testFirstNameProperty() {
+        String expected = "John";
+        sqlResponseDto.setFirstName(expected);
+        String actual = sqlResponseDto.getFirstName();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testSsnExtProperty() {
+        String expected = "TestSsnExt";
+        sqlResponseDto.setSsnExt(expected);
+        String actual = sqlResponseDto.getSsnExt();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testBirthDateProperty() {
+        Date expected = new Date();
+        sqlResponseDto.setBirthDate(expected);
+        Date actual = sqlResponseDto.getBirthDate();
+        Assert.assertEquals(expected, actual);
+    }
+}
+
