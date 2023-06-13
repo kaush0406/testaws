@@ -1,0 +1,31 @@
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ParticipantResponseDtoTest {
+
+    @Test
+    public void testGetAndSetMyObject() {
+        SqlResponseDto myObject = new SqlResponseDto();
+        myObject.setSomeProperty("Some value");
+
+        ParticipantResponseDto participantResponse = new ParticipantResponseDto();
+        participantResponse.setMyObject(myObject);
+
+        Assert.assertEquals(myObject, participantResponse.getMyObject());
+    }
+
+    @Test
+    public void testGetAndSetInvestmentDetails() {
+        List<InvestmentDetailsDto> investmentDetails = new ArrayList<>();
+        investmentDetails.add(new InvestmentDetailsDto());
+        investmentDetails.add(new InvestmentDetailsDto());
+
+        ParticipantResponseDto participantResponse = new ParticipantResponseDto();
+        participantResponse.setInvestmentDetails(investmentDetails);
+
+        Assert.assertEquals(investmentDetails, participantResponse.getInvestmentDetails());
+    }
+}
