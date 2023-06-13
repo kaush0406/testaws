@@ -1,0 +1,142 @@
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Date;
+
+public class MyClassTest {
+    private MyClass myClass;
+
+    @Before
+    public void setUp() {
+        myClass = new MyClass();
+    }
+
+    @Test
+    public void testDatabaseProperty() {
+        String expected = "TestDatabase";
+        myClass.setDatabase(expected);
+        String actual = myClass.getDatabase();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPlanNumberProperty() {
+        String expected = "123";
+        myClass.setPlanNumber(expected);
+        String actual = myClass.getPlanNumber();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPlanNameProperty() {
+        String expected = "TestPlan";
+        myClass.setPlanName(expected);
+        String actual = myClass.getPlanName();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testS3nProperty() {
+        String expected = "TestS3n";
+        myClass.setS3n(expected);
+        String actual = myClass.getS3n();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testSnExtensionProperty() {
+        String expected = "TestExtension";
+        myClass.setSnExtension(expected);
+        String actual = myClass.getSnExtension();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPptFirstNameProperty() {
+        String expected = "John";
+        myClass.setPptFirstName(expected);
+        String actual = myClass.getPptFirstName();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testPptLastNameProperty() {
+        String expected = "Doe";
+        myClass.setPptLastName(expected);
+        String actual = myClass.getPptLastName();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testProductVersionProperty() {
+        String expected = "1.0";
+        myClass.setProductVersion(expected);
+        String actual = myClass.getProductVersion();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testAccountBalanceProperty() {
+        double expected = 1000.0;
+        myClass.setAccountBalance(expected);
+        double actual = myClass.getAccountBalance();
+        Assert.assertEquals(expected, actual, 0.0);
+    }
+
+    @Test
+    public void testBalanceEffectiveDateProperty() {
+        String expected = "2023-06-01";
+        myClass.setBalanceEffectiveDate(expected);
+        String actual = myClass.getBalanceEffectiveDate();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testLavaProperty() {
+        double[] expected = {1.0, 2.0, 3.0};
+        myClass.setLava(expected);
+        double[] actual = myClass.getLava();
+        Assert.assertArrayEquals(expected, actual, 0.0);
+    }
+
+    @Test
+    public void testIncomeBaseProperty() {
+        double expected = 5000.0;
+        myClass.setIncomeBase(expected);
+        double actual = myClass.getIncomeBase();
+        Assert.assertEquals(expected, actual, 0.0);
+    }
+
+    @Test
+    public void testVtdAmountProperty() {
+        double expected = 2000.0;
+        myClass.setVtdAmount(expected);
+        double actual = myClass.getVtdAmount();
+        Assert.assertEquals(expected, actual, 0.0);
+    }
+
+    @Test
+    public void testDobProperty() {
+        Date expected = new Date();
+        myClass.setDob(expected);
+        Date actual = myClass.getDob();
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testInstallmentPaymentAmountsProperty() {
+        double expected = 100.0;
+        myClass.setInstallmentPaymentAmounts(expected);
+        double actual = myClass.getInstallmentPaymentAmounts();
+        Assert.assertEquals(expected, actual, 0.0);
+    }
+
+    @Test
+    public void testInstallmentPaymentFrequencyProperty() {
+        String expected = "Monthly";
+        myClass.setInstallmentPaymentFrequency(expected);
+        String actual = myClass.getInstallmentPaymentFrequency();
+        Assert.assertEquals(expected, actual);
+    }
+}
