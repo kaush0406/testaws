@@ -1,0 +1,78 @@
+import com.empowerretirement.moneyout.restclient.IncomeFlexRestClient;
+import com.empowerretirement.moneyout.restclient.SecurityRestClient;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+import static org.mockito.Mockito.*;
+
+@RunWith(MockitoJUnitRunner.class)
+public class IncomeFlexRestClientTest {
+
+    @Mock
+    private RestTemplate restTemplate;
+
+    @Mock
+    private SecurityRestClient securityRestClient;
+
+    private IncomeFlexRestClient incomeFlexRestClient;
+
+    @Before
+    public void setUp() {
+        incomeFlexRestClient = new IncomeFlexRestClient();
+        incomeFlexRestClient.setRestTemplate(restTemplate);
+        incomeFlexRestClient.setSecurityRestClient(securityRestClient);
+    }
+
+    @Test
+    public void testGetIncomeFlexInfo() throws Exception {
+        // Mock input parameters
+        String indId = "123";
+        String gaId = "456";
+        String dbName = "testDb";
+
+        // Mock response entity
+        String responseBody = "Response Body";
+        ResponseEntity<String> responseEntity = ResponseEntity.ok().body(responseBody);
+
+        // Mock JWT token
+        String jwtToken = "mockJwtToken";
+        when(securityRestClient.jwtProvider()).thenReturn(jwtToken);
+
+        // Mock URI and request entity
+        URI uri = new URI("http://example.com/incomeflex");
+        Map<String, String> params = new HashMap<>();
+        params.put("ga_id", gaId);
+        params.put("ind_id", indId);
+        params.put("db_name", dbName);
+        URI expectedUri = UriComponentsBuilder.fromUriString(uri.toString())
+                .buildAndExpand(params)
+                .toUri();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "JWT " + jwtToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> requestEntity = new HttpEntity<>(null, headers);
+
+        // Mock restTemplate.exchange() method
+        when(restTemplate.exchange(expectedUri, HttpMethod.GET, requestEntity, String.class))
+                .thenReturn(responseEntity);
+
+        // Invoke the method under test
+        String result = incomeFlexRestClient.getIncomeFlexInfo(indId, gaId, dbName);
+
+        // Verify that the restTemplate.exchange() method was called with the correct arguments
+        verify(restTemplate).exchange(expectedUri, HttpMethod.GET, requestEntity, String.class);
+
+        // Verify the result
+        assertEquals(responseBody, result);
+
+        // Additional assertions can be added based on the expected behavior
+        // For example, verifying the JWT token retrieval or log statements
+    }
+}
