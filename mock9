@@ -89,3 +89,127 @@ class PptReportDtoItemWriterTest {
         file.delete();
     }
 }
+
+
+---------------------------------------------------------------------------
+
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.batch.item.file.transform.FieldExtractor;
+import org.springframework.batch.item.file.transform.LineAggregator;
+import org.springframework.batch.item.file.transform.PassThroughFieldExtractor;
+import org.springframework.batch.item.file.transform.PassThroughLineAggregator;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class PptReportDtoItemWriterTest {
+
+    private PptReportDtoItemWriter writer;
+    private List<ParticipantResponseDto> items;
+
+    @BeforeEach
+    void setUp() {
+        writer = new PptReportDtoItemWriter();
+        items = new ArrayList<>();
+    }
+
+    @Test
+    void testWrite() throws Exception {
+        // Create some test data
+        ParticipantResponseDto participant1 = createParticipantResponseDto();
+        items.add(participant1);
+
+        // Set up the writer
+        writer.setFilename("test.csv");
+        writer.setLineAggregator(createLineAggregator());
+
+        // Write the items
+        writer.write(items);
+
+        // Verify that the file was created
+        assertTrue(fileExists("test.csv"));
+
+        // Read the contents of the file
+        List<String> lines = readAllLines("test.csv");
+
+        // Verify the expected content
+        assertEquals(2, lines.size()); // Header + data
+        assertEquals("DATABASE, PLAN NUMBER, PLAN NAME, SSN, SSN EXTENSION, FIRST NAME, LAST NAME, PRODUCT VERSION, CURRENT ACCOUNT BALANCE, BALANCE EFFECTIVE DATE, LAWA AMOUNT, INCOME BASE, YTD WITHDRAWAL AMOUNT, DOB", lines.get(0));
+        assertEquals(", , , , , , , , 0.0, dd-MMM-yyyy, 0.0, , , ", lines.get(1)); // Participant data
+
+        // Clean up the file
+        deleteFile("test.csv");
+    }
+
+    private ParticipantResponseDto createParticipantResponseDto() {
+        ParticipantResponseDto participant = new ParticipantResponseDto();
+        
+        // Create and set the SqlResponseDto
+        SqlResponseDto sqlResponseDto = new SqlResponseDto();
+        sqlResponseDto.setDbName("DATABASE");
+        sqlResponseDto.setGaId("PLAN NUMBER");
+        sqlResponseDto.setPlanName("PLAN NAME");
+        sqlResponseDto.setSsn("SSN");
+        sqlResponseDto.setSsnExt("SSN EXTENSION");
+        sqlResponseDto.setFirstName("FIRST NAME");
+        sqlResponseDto.setLastName("LAST NAME");
+        sqlResponseDto.setBirthDate(new Date()); // Set the birth date to the current date
+        
+        participant.setMyObject(sqlResponseDto);
+
+        // Create and set the InvestmentDetailsDto list
+        List<InvestmentDetailsDto> investmentDetails = new ArrayList<>();
+        InvestmentDetailsDto investmentDetail = new InvestmentDetailsDto();
+        investmentDetail.setRiderCode("PRODUCT VERSION");
+        investmentDetail.setBalance(0.0);
+        investmentDetail.setMinGuarAmt(0.0);
+        investmentDetails.add(investmentDetail);
+        
+        participant.setInvestmentDetails(investmentDetails);
+        
+        return participant;
+    }
+
+    private LineAggregator<PptReportDto> createLineAggregator() {
+        PassThroughLineAggregator<PptReportDto> lineAggregator = new PassThroughLineAggregator<>();
+        lineAggregator.setFieldExtractor(createFieldExtractor());
+        return lineAggregator;
+    }
+
+    private FieldExtractor<PptReportDto> createFieldExtractor() {
+        PassThroughFieldExtractor<PptReportDto> fieldExtractor = new PassThroughFieldExtractor<>();
+        fieldExtractor.setNames(new String[]{
+                "database", "planNumber", "planName", "ssn", "ssnExtension", "pptFirstName",
+                "pptLastName", "productVersion", "accountBalance", "balanceEffectiveDate",
+                "lawa", "incomeBase", "ytdAmount", "dob"
+        });
+        return fieldExtractor;
+    }
+
+    private boolean fileExists(String filename) {
+        File file = new File(filename);
+        return file.exists() && file.isFile();
+    }
+
+    private List<String> readAllLines(String filename) throws Exception {
+        Path path = Paths.get(filename);
+        return Files.readAllLines(path);
+    }
+
+    private void deleteFile(String filename) {
+        File file = new File(filename);
+        file.delete();
+    }
+}
+
