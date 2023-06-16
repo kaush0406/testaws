@@ -1,0 +1,91 @@
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.batch.item.file.transform.FieldExtractor;
+import org.springframework.batch.item.file.transform.LineAggregator;
+import org.springframework.batch.item.file.transform.PassThroughFieldExtractor;
+import org.springframework.batch.item.file.transform.PassThroughLineAggregator;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class PptReportDtoItemWriterTest {
+
+    private PptReportDtoItemWriter writer;
+    private List<ParticipantResponseDto> items;
+
+    @BeforeEach
+    void setUp() {
+        writer = new PptReportDtoItemWriter();
+        items = new ArrayList<>();
+    }
+
+    @Test
+    void testWrite() throws Exception {
+        // Create some test data
+        ParticipantResponseDto participant1 = new ParticipantResponseDto();
+        participant1.setMyObject(new SqlResponseDto());
+        participant1.setInvestmentDetails(new ArrayList<>());
+        items.add(participant1);
+
+        // Set up the writer
+        writer.setFilename("test.csv");
+        writer.setLineAggregator(createLineAggregator());
+
+        // Write the items
+        writer.write(items);
+
+        // Verify that the file was created
+        assertTrue(fileExists("test.csv"));
+
+        // Read the contents of the file
+        List<String> lines = readAllLines("test.csv");
+
+        // Verify the expected content
+        assertEquals(2, lines.size()); // Header + data
+        assertEquals("DATABASE, PLAN NUMBER, PLAN NAME, SSN, SSN EXTENSION, FIRST NAME, LAST NAME, PRODUCT VERSION, CURRENT ACCOUNT BALANCE, BALANCE EFFECTIVE DATE, LAWA AMOUNT, INCOME BASE, YTD WITHDRAWAL AMOUNT, DOB", lines.get(0));
+        assertEquals("", lines.get(1)); // Empty line for the participant
+
+        // Clean up the file
+        deleteFile("test.csv");
+    }
+
+    private LineAggregator<PptReportDto> createLineAggregator() {
+        PassThroughLineAggregator<PptReportDto> lineAggregator = new PassThroughLineAggregator<>();
+        lineAggregator.setFieldExtractor(createFieldExtractor());
+        return lineAggregator;
+    }
+
+    private FieldExtractor<PptReportDto> createFieldExtractor() {
+        PassThroughFieldExtractor<PptReportDto> fieldExtractor = new PassThroughFieldExtractor<>();
+        fieldExtractor.setNames(new String[]{
+                "database", "planNumber", "planName", "ssn", "ssnExtension", "pptFirstName",
+                "pptLastName", "productVersion", "accountBalance", "balanceEffectiveDate",
+                "lawa", "incomeBase", "ytdAmount", "dob"
+        });
+        return fieldExtractor;
+    }
+
+    private boolean fileExists(String filename) {
+        File file = new File(filename);
+        return file.exists() && file.isFile();
+    }
+
+    private List<String> readAllLines(String filename) throws Exception {
+        Path path = Paths.get(filename);
+        return Files.readAllLines(path);
+    }
+
+    private void deleteFile(String filename) {
+        File file = new File(filename);
+        file.delete();
+    }
+}
