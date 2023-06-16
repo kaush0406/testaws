@@ -121,3 +121,41 @@ public class BatchConfigurationTest {
             assertEquals(writer, step.getTasklet().getClass().getMethod("getDelegate").invoke(step.getTasklet()));
         }
     }
+    
+    
+    ------------------------------------------------------------------------------------------------------------------------------
+    
+     @Autowired
+    private BatchConfiguration batchConfiguration;
+
+    @MockBean
+    private StepExecution stepExecution;
+
+    @Before
+    public void setUp() {
+        // Set up mock behavior for the StepExecution object
+        when(stepExecution.getJobExecution().getExecutionContext().getString("database"))
+                .thenReturn("db1");
+    }
+
+    @Test
+    public void testParticipantReader() throws Exception {
+        // Mock the necessary dependencies
+        JdbcCursorItemReader<SqlResponseDto> reader = mock(JdbcCursorItemReader.class);
+        when(reader.setDataSource(null)).thenReturn(reader); // Provide your own DataSource mock or null
+
+        RowMapper<SqlResponseDto> rowMapper = mock(RowMapper.class);
+        when(reader.setRowMapper(rowMapper)).thenReturn(reader);
+
+        // Call the participantReader method
+        JdbcCursorItemReader<SqlResponseDto> result = batchConfiguration.participantReader(stepExecution, null);
+        assertNotNull(result);
+
+        // Verify the behavior and properties of the JdbcCursorItemReader
+        assertEquals(reader, result);
+        assertEquals(rowMapper, result.getRowMapper());
+    }
+
+    // Additional test methods can be added for other beans and configurations in BatchConfiguration
+    // ...
+}
