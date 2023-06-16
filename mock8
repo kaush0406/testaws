@@ -159,3 +159,33 @@ public class BatchConfigurationTest {
     // Additional test methods can be added for other beans and configurations in BatchConfiguration
     // ...
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ExecutionContext executionContext = new ExecutionContext();
+        executionContext.putString("database", "db1");
+        when(stepExecution.getJobExecution().getExecutionContext()).thenReturn(executionContext);
+
+        // Mock the data source and its behavior
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        when(dataSource.getDataSource("db1")).thenReturn(jdbcTemplate.getDataSource());
+
+        // Create an instance of the JdbcCursorItemReader
+        JdbcCursorItemReader<SqlResponseDto> reader = batchConfiguration.participantReader(stepExecution, dataSource);
+
+        // Assert the properties of the reader
+        assertEquals(jdbcTemplate.getDataSource(), reader.getDataSource());
+        assertEquals(QUERY_FIND_LOCKIN_PPT, reader.getSql());
