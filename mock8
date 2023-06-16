@@ -1,0 +1,78 @@
+import static org.mockito.Mockito.*;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.item.database.JdbcCursorItemReader;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes = BatchConfiguration.class)
+public class BatchConfigurationTest {
+
+    private BatchConfiguration batchConfiguration;
+    private StepBuilderFactory stepBuilderFactory;
+
+    @Before
+    public void setUp() {
+        batchConfiguration = new BatchConfiguration();
+        stepBuilderFactory = mock(StepBuilderFactory.class);
+    }
+
+    @Test
+    public void testGetSteps() throws Exception {
+        String[] databases = {"db1", "db2", "db3"};
+
+        JdbcCursorItemReader<BatchConfiguration.SqlResponseDto> reader = mock(JdbcCursorItemReader.class);
+        when(reader.setDataSource(any())).thenReturn(reader);
+        when(reader.setSql(anyString())).thenReturn(reader);
+        when(reader.setRowMapper(any(BatchConfiguration.SqlResponseRowMapper.class))).thenReturn(reader);
+
+        Step[] steps = batchConfiguration.getSteps(databases, reader, stepBuilderFactory);
+
+        // Verify that the correct number of steps is created
+        assertEquals(databases.length, steps.length);
+
+        // Verify step properties for each created step
+        for (int i = 0; i < databases.length; i++) {
+            Step step = steps[i];
+            assertNotNull(step);
+            assertEquals("step" + (i + 1), step.getName());
+
+            // Verify step listener and other properties if needed
+            // ...
+
+            // Verify reader, processor, and writer
+            assertEquals(reader, step.getReader());
+            // Verify other components if needed
+            // ...
+        }
+    }
+
+    @Test
+    public void testSqlResponseRowMapper() throws SQLException {
+        BatchConfiguration.SqlResponseRowMapper rowMapper = batchConfiguration.new SqlResponseRowMapper();
+        ResultSet resultSet = mock(ResultSet.class);
+
+        // Set up mocked ResultSet values
+        when(resultSet.getString("DB_NAME")).thenReturn("dbName");
+        // Set other mocked ResultSet values if needed
+        // ...
+
+        // Call the row mapper
+        BatchConfiguration.SqlResponseDto dto = rowMapper.mapRow(resultSet, 0);
+
+        // Verify the mapped values
+        assertEquals("dbName", dto.getDbName());
+        // Verify other mapped values if needed
+        // ...
+    }
+}
