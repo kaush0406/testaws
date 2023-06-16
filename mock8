@@ -76,3 +76,48 @@ public class BatchConfigurationTest {
         // ...
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+@Test
+    public void testGetSteps() throws Exception {
+        String[] databases = {"db1", "db2", "db3"};
+
+        JdbcCursorItemReader<BatchConfiguration.SqlResponseDto> reader = mock(JdbcCursorItemReader.class);
+        when(reader.setDataSource(any())).thenReturn(reader);
+        when(reader.setSql(anyString())).thenReturn(reader);
+        when(reader.setRowMapper(any(BatchConfiguration.SqlResponseRowMapper.class))).thenReturn(reader);
+
+        ItemWriter<ParticipantResponseDto> writer = mock(ItemWriter.class);
+        ItemProcessor<BatchConfiguration.SqlResponseDto, ParticipantResponseDto> processor = mock(ItemProcessor.class);
+
+        Step[] steps = batchConfiguration.getSteps(databases, reader, processor, writer, stepBuilderFactory);
+
+        // Verify that the correct number of steps is created
+        assertEquals(databases.length, steps.length);
+
+        // Verify step properties for each created step
+        for (int i = 0; i < databases.length; i++) {
+            Step step = steps[i];
+            assertNotNull(step);
+            assertEquals("step" + (i + 1), step.getName());
+
+            // Verify step listener and other properties if needed
+            // ...
+
+            // Verify reader, processor, and writer through StepExecution
+            StepExecution stepExecution = mock(StepExecution.class);
+            when(stepExecution.getReader()).thenReturn(reader);
+            assertEquals(reader, stepExecution.getReader());
+            assertEquals(processor, step.getTasklet().getClass().getMethod("getDelegate").invoke(step.getTasklet()));
+            assertEquals(writer, step.getTasklet().getClass().getMethod("getDelegate").invoke(step.getTasklet()));
+        }
+    }
