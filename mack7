@@ -1,0 +1,57 @@
+import com.empowerretirement.moneyout.model.SqlResponseDto;
+import com.empowerretirement.moneyout.model.ParticipantResponseDto;
+import com.empowerretirement.moneyout.model.PptReportDto;
+import com.empowerretirement.moneyout.restclient.IncomeFlexRestClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
+
+public class ReportProcessorTest {
+
+    @Mock
+    private IncomeFlexRestClient incomeFlexRestClient;
+
+    private ReportProcessor reportProcessor;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+        reportProcessor = new ReportProcessor();
+        reportProcessor.setIfxProcessor(incomeFlexRestClient);
+    }
+
+    @Test
+    public void testProcess() throws Exception {
+        // Mock input
+        SqlResponseDto sqlResponseDto = new SqlResponseDto();
+        sqlResponseDto.setIndId(123);
+        sqlResponseDto.setGaId("GA123");
+        sqlResponseDto.setDbName("db123");
+
+        // Mock IncomeFlexInfo response
+        String investmentSummaryRes = "{\"property1\":\"value1\",\"property2\":\"value2\"}";
+        ParticipantResponseDto ifxResponseDto = new ParticipantResponseDto();
+        ifxResponseDto.setProperty1("value1");
+        ifxResponseDto.setProperty2("value2");
+
+        // Set up the mock behavior
+        when(incomeFlexRestClient.getIncomeFlexInfo("123", "GA123", "db123"))
+                .thenReturn(investmentSummaryRes);
+
+        // Invoke the method under test
+        ParticipantResponseDto result = reportProcessor.process(sqlResponseDto);
+
+        // Verify the mock interactions
+        verify(incomeFlexRestClient).getIncomeFlexInfo("123", "GA123", "db123");
+
+        // Perform assertions
+        assertEquals(sqlResponseDto, result.getMyObject());
+        assertEquals("value1", result.getProperty1());
+        assertEquals("value2", result.getProperty2());
+    }
+}
