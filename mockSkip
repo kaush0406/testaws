@@ -1,0 +1,42 @@
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class StepSkipListenerTest {
+  
+    @Test
+    public void testWriteFailedItemToCsv() throws IOException {
+        // Arrange
+        StepSkipListener listener = new StepSkipListener();
+        String db = "TestDB";
+        String gaId = "123456";
+        String indId = "7890";
+        String errorMessage = "Error occurred";
+        String expectedLine = "TestDB,123456,7890,Error occurred";
+        String errorReportPath = listener.getErrorReportPath();
+        boolean fileExists = new java.io.File(errorReportPath).exists();
+
+        // Act
+        listener.writeFailedItemToCsv(db, gaId, indId, errorMessage);
+
+        // Assert
+        try (BufferedReader reader = new BufferedReader(new FileReader(errorReportPath))) {
+            List<String> lines = new ArrayList<>();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
+            // If the file didn't exist before, the first line should be the header
+            if (!fileExists) {
+                Assertions.assertEquals("DATABASE,GAID,INDID,ERROR MESSAGE", lines.get(0));
+                Assertions.assertEquals(expectedLine, lines.get(1));
+            } else {
+                Assertions.assertEquals(expectedLine, lines.get(lines.size() - 1));
+            }
+        }
+    }
+}
