@@ -1,0 +1,171 @@
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.batch.item.file.FlatFileItemWriter;
+import org.springframework.core.io.FileSystemResource;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static org.mockito.Mockito.*;
+
+public class PptReportDtoItemWriterTest {
+
+    private PptReportDtoItemWriter itemWriter;
+
+    @Mock
+    private FlatFileItemWriter<PptReportDto> writer;
+
+    @BeforeEach
+    public void setup() {
+        MockitoAnnotations.openMocks(this);
+        itemWriter = new PptReportDtoItemWriter();
+        itemWriter.writer = writer;
+    }
+
+    @Test
+    public void testWrite() throws Exception {
+        // Prepare test data
+        List<ParticipantResponseDto> items = new ArrayList<>();
+        ParticipantResponseDto participant1 = new ParticipantResponseDto();
+        ParticipantResponseDto participant2 = new ParticipantResponseDto();
+        items.add(participant1);
+        items.add(participant2);
+
+        // Define behavior for investmentDetails and myObject
+        List<InvestmentDetailsDto> investmentDetails1 = new ArrayList<>();
+        InvestmentDetailsDto invDetail1 = new InvestmentDetailsDto();
+        invDetail1.setProdSubtype("INCOMEFLEX-SELECT");
+        invDetail1.setBalance(100.0);
+        invDetail1.setMinGuarAmt(50.0);
+        investmentDetails1.add(invDetail1);
+        participant1.setInvestmentDetails(investmentDetails1);
+
+        SqlResponseDto myObject1 = new SqlResponseDto();
+        myObject1.setdbName("Test DB");
+        myObject1.setGaId("123");
+        myObject1.setPlanName("Test Plan");
+        myObject1.setSsn("123-45-6789");
+        myObject1.setSsnExt("001");
+        myObject1.setFirstName("John");
+        myObject1.setLastName("Doe");
+        myObject1.setBirthDate(new Date());
+        participant1.setMyObject(myObject1);
+
+        List<InvestmentDetailsDto> investmentDetails2 = new ArrayList<>();
+        InvestmentDetailsDto invDetail2 = new InvestmentDetailsDto();
+        invDetail2.setProdSubtype("INCOMEFLEX-TARGET");
+        invDetail2.setRiderCode("Test Rider");
+        investmentDetails2.add(invDetail2);
+        participant2.setInvestmentDetails(investmentDetails2);
+
+        SqlResponseDto myObject2 = new SqlResponseDto();
+        myObject2.setdbName("Test DB");
+        myObject2.setGaId("456");
+        myObject2.setPlanName("Test Plan");
+        myObject2.setSsn("987-65-4321");
+        myObject2.setSsnExt("002");
+        myObject2.setFirstName("Jane");
+        myObject2.setLastName("Smith");
+        myObject2.setBirthDate(new Date());
+        participant2.setMyObject(myObject2);
+
+        // Set up SimpleDateFormat with a fixed date for testing
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy");
+        Date testDate = formatter.parse("01-Jan-2023");
+        itemWriter.formatterNew = new SimpleDateFormat("dd-MMM-yyyy") {
+            @Override
+            public Date parse(String source) {
+                return testDate;
+            }
+        };
+
+        // Execute the write() method
+        itemWriter.write(items);
+
+        // Verify interactions
+        verify(writer).setResource(any(FileSystemResource.class));
+        verify(writer).setHeaderCallback(any());
+        verify(writer).setLineAggregator(any());
+        verify(writer).open(any());
+        verify(writer).write(anyList());
+        verify(writer).close();
+
+        // Perform assertions
+        Assertions.assertEquals(2, itemWriter.listPpt.size());
+
+        PptReportDto pptReport1 = itemWriter.listPpt.get(0);
+        Assertions.assertEquals("Test DB", pptReport1.getDatabase());
+        Assertions.assertEquals("123", pptReport1.getPlanNumber());
+        Assertions.assertEquals("Test Plan", pptReport1.getPlanName());
+        Assertions.assertEquals("123-45-6789", pptReport1.getSsn());
+        Assertions.assertEquals("001", pptReport1.getSsnExtension());
+        Assertions.assertEquals("John", pptReport1.getPptFirstName());
+        Assertions.assertEquals("Doe", pptReport1.getPptLastName());
+        Assertions.assertEquals("INCOMEFLEX-SELECT", pptReport1.getProductVersion());
+        Assertions.assertEquals(100.0, pptReport1.getAccountBalance());
+        Assertions.assertEquals("01-Jan-2023", pptReport1.getBalanceEffectiveDate());
+        Assertions.assertEquals(50.0, pptReport1.getLawa());
+        Assertions.assertEquals(null, pptReport1.getIncomeBase()); // Check if this is the expected behavior
+        Assertions.assertEquals(null, pptReport1.getYtdAmount()); // Check if this is the expected behavior
+        Assertions.assertEquals(testDate, pptReport1.getDob());
+
+        PptReportDto pptReport2 = itemWriter.listPpt.get(1);
+        Assertions.assertEquals("Test DB", pptReport2.getDatabase());
+        Assertions.assertEquals("456", pptReport2.getPlanNumber());
+        Assertions.assertEquals("Test Plan", pptReport2.getPlanName());
+        Assertions.assertEquals("987-65-4321", pptReport2.getSsn());
+        Assertions.assertEquals("002", pptReport2.getSsnExtension());
+        Assertions.assertEquals("Jane", pptReport2.getPptFirstName());
+        Assertions.assertEquals("Smith", pptReport2.getPptLastName());
+        Assertions.assertEquals("Test Rider", pptReport2.getProductVersion());
+        Assertions.assertEquals(0.0, pptReport2.getAccountBalance()); // Check if this is the expected behavior
+        Assertions.assertEquals("01-Jan-2023", pptReport2.getBalanceEffectiveDate());
+        Assertions.assertEquals(0.0, pptReport2.getLawa()); // Check if this is the expected behavior
+        Assertions.assertEquals(null, pptReport2.getIncomeBase()); // Check if this is the expected behavior
+        Assertions.assertEquals(null, pptReport2.getYtdAmount()); // Check if this is the expected behavior
+        Assertions.assertEquals(testDate, pptReport2.getDob());
+    }
+
+    @Test
+    public void testProcessorSelectAndTarget() {
+        // Prepare test data
+        InvestmentDetailsDto invDetail = new InvestmentDetailsDto();
+        invDetail.setRiderCode("Test Rider");
+        invDetail.setBalance(100.0);
+        invDetail.setMinGuarAmt(50.0);
+
+        SqlResponseDto myObject = new SqlResponseDto();
+        myObject.setdbName("Test DB");
+        myObject.setGaId("123");
+        myObject.setPlanName("Test Plan");
+        myObject.setSsn("123-45-6789");
+        myObject.setSsnExt("001");
+        myObject.setFirstName("John");
+        myObject.setLastName("Doe");
+        myObject.setBirthDate(new Date());
+
+        // Execute the processorSelectAndTarget() method
+        PptReportDto pptReport = itemWriter.processorSelectAndTarget(invDetail, myObject);
+
+        // Perform assertions
+        Assertions.assertEquals("Test DB", pptReport.getDatabase());
+        Assertions.assertEquals("123", pptReport.getPlanNumber());
+        Assertions.assertEquals("Test Plan", pptReport.getPlanName());
+        Assertions.assertEquals("123-45-6789", pptReport.getSsn());
+        Assertions.assertEquals("001", pptReport.getSsnExtension());
+        Assertions.assertEquals("John", pptReport.getPptFirstName());
+        Assertions.assertEquals("Doe", pptReport.getPptLastName());
+        Assertions.assertEquals("Test Rider", pptReport.getProductVersion());
+        Assertions.assertEquals(100.0, pptReport.getAccountBalance());
+        Assertions.assertEquals("01-Jan-2023", pptReport.getBalanceEffectiveDate());
+        Assertions.assertEquals(50.0, pptReport.getLawa());
+        Assertions.assertEquals(null, pptReport.getIncomeBase()); // Check if this is the expected behavior
+        Assertions.assertEquals(null, pptReport.getYtdAmount()); // Check if this is the expected behavior
+        Assertions.assertEquals(myObject.getBirthDate(), pptReport.getDob());
+    }
+}
