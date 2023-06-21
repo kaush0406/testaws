@@ -1,0 +1,32 @@
+  @Test
+    void testGetSteps() {
+        String[] databases = {"db1", "db2", "db3"};
+        JdbcCursorItemReader<SqlResponseDto> databaseItemReader = mock(JdbcCursorItemReader.class);
+
+        Step[] steps = batchConfiguration.getSteps(databases, databaseItemReader, stepBuilderFactory);
+
+        // Verify the step creation
+        assertEquals(3, steps.length);
+        for (int i = 0; i < steps.length; i++) {
+            verify(stepBuilderFactory).get("step" + (i + 1));
+            // Verify other configurations for the step
+        }
+    }
+
+    @Test
+    void testIfxJob() throws Exception {
+        IncomeFlexDepletionReportJobListener listener = mock(IncomeFlexDepletionReportJobListener.class);
+        JdbcCursorItemReader<SqlResponseDto> reader = mock(JdbcCursorItemReader.class);
+        ItemWriter<ParticipantResponseDto> writer = mock(ItemWriter.class);
+        String[] databases = {"db1", "db2"};
+        when(reader.read()).thenReturn(null); // Simulate end of data
+        when(stepBuilderFactory.get(Mockito.anyString())).thenReturn(mock(StepBuilderFactory.StepBuilder.class));
+
+        Job job = batchConfiguration.ifxJob(listener, reader, writer, jobBuilderFactory, stepBuilderFactory);
+
+        // Verify the job configuration
+        verify(jobBuilderFactory).get("ifxJob");
+        // Verify the step creation and flow
+        verify(jobBuilderFactory).get(Mockito.anyString());
+        // Verify other configurations for the job
+    }
