@@ -1,0 +1,72 @@
+import com.empowerretirement.moneyout.restclient.IncomeFlexRestClient;
+import com.empowerretirement.moneyout.util.CommonConstants;
+import com.empowerretirement.moneyout.restclient.SecurityRestClient;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+class IncomeFlexRestClientTest {
+    
+    @Mock
+    private RestTemplate restTemplate;
+    
+    @Mock
+    private SecurityRestClient securityRestClient;
+    
+    private IncomeFlexRestClient incomeFlexRestClient;
+    
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        incomeFlexRestClient = new IncomeFlexRestClient();
+        incomeFlexRestClient.restTemplate = restTemplate;
+        incomeFlexRestClient.securityRestClient = securityRestClient;
+    }
+    
+    @Test
+    void testGetIncomeFlexInfo() {
+        // Mock the dependencies
+        String jwtToken = "dummyJWTToken";
+        when(securityRestClient.jwtProvider()).thenReturn(jwtToken);
+        
+        ResponseEntity<String> responseEntity = ResponseEntity.ok("Test response body");
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(responseEntity);
+        
+        // Invoke the method under test
+        String gaId = "dummyGaId";
+        String indId = "dummyIndId";
+        String dbName = "dummyDbName";
+        String result = incomeFlexRestClient.getIncomeFlexInfo(gaId, indId, dbName);
+        
+        // Verify the interactions and assertions
+        verify(securityRestClient).jwtProvider();
+        
+        HttpHeaders expectedHeaders = new HttpHeaders();
+        expectedHeaders.add(CommonConstants.AUTHORIZATION_HEADER_KEY, CommonConstants.JWT + jwtToken);
+        expectedHeaders.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        HttpEntity<String> expectedRequestEntity = new HttpEntity<>(expectedHeaders);
+        
+        Map<String, String> expectedParams = new HashMap<>();
+        expectedParams.put("ga_id", gaId);
+        expectedParams.put("ind_id", indId);
+        expectedParams.put("db_name", dbName);
+        URI expectedUri = URI.create(incomeFlexRestClient.incomeflexBaseUrl + CommonConstants.GET_INCOMEFLEX_URL);
+        
+        verify(restTemplate).exchange(expectedUri, HttpMethod.GET, expectedRequestEntity, String.class);
+        
+        assertEquals("Test response body", result);
+    }
+}
