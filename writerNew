@@ -12,3 +12,16 @@ when(dao.getPpayFrequency(anyString(), anyString(), anyString(), anyString())).t
         verify(dao, times(2)).getPpayAmount(anyString(), anyString(), anyString(), anyString());
         verify(dao, times(2)).getriderCode(anyString(), anyString(), anyString(), anyString(), anyString());
 
+
+
+----------------------------------------------------------------------------------------------------------------
+
+  verify(dao).setJdbcTemplate(any());
+        verify(dao).getPpayFrequency(db, "gaId", "indId", "INCOMEFLEX-SELECT");
+        verify(dao).getPpayAmount(db, "gaId", "indId", "INCOMEFLEX-SELECT");
+        verify(dao).getriderCode(db, "gaId", "indId", "INCOMEFLEX-SELECT", "sdioId");
+        verify(dao).getPpayFrequency(db, "gaId", "indId", "INCOMEFLEX-TARGET");
+        verify(dao).getPpayAmount(db, "gaId", "indId", "INCOMEFLEX-TARGET");
+        verify(dao).getriderCode(db, "gaId", "indId", "INCOMEFLEX-TARGET", null);
+        verify(rds).getDataSource(db);
+
