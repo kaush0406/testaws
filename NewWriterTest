@@ -1,0 +1,49 @@
+List<ParticipantResponseDto> items = new ArrayList<>();
+
+        ParticipantResponseDto dto1 = new ParticipantResponseDto();
+        ParticipantDetailsDto pptDetail1 = new ParticipantDetailsDto();
+        pptDetail1.setLockedInStatusCode("P");
+        pptDetail1.setProductSubType("INCOMEFLEX-SELECT");
+        dto1.setParticipantSummaryDetails(List.of(pptDetail1));
+
+        ParticipantResponseDto dto2 = new ParticipantResponseDto();
+        ParticipantDetailsDto pptDetail2 = new ParticipantDetailsDto();
+        pptDetail2.setLockedInStatusCode("P");
+        pptDetail2.setProductSubType("INCOMEFLEX-TARGET");
+        pptDetail2.setBalance(50.0);
+        pptDetail2.setGlwbParticipantSummaryPostLockIn(new PostLockInDetailsDto());
+        pptDetail2.getGlwbParticipantSummaryPostLockIn().setGuaranteedAnnualWithdrawalAmount(25.0);
+        dto2.setParticipantSummaryDetails(List.of(pptDetail2));
+
+        items.add(dto1);
+        items.add(dto2);
+
+        // Mocked objects
+        RoutingDataSource rds = mock(RoutingDataSource.class);
+        Dao dao = mock(Dao.class);
+        JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+
+        when(rds.getDataSource(anyString())).thenReturn(jdbcTemplate);
+        when(dao.getPpayFrequency(anyString(), anyString(), anyString(), anyString())).thenReturn("Monthly");
+        when(dao.getPpayAmount(anyString(), anyString(), anyString(), anyString())).thenReturn("1000");
+        when(dao.getriderCode(anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn("R001");
+
+        ParticipantReportItemWriter itemWriter = new ParticipantReportItemWriter();
+        itemWriter.setDao(dao);
+        itemWriter.setRds(rds);
+
+        itemWriter.write(items);
+
+        // Verify the interactions with mocked objects or assertions on the outcomes
+        verify(rds, times(2)).getDataSource(anyString());
+        verify(dao, times(2)).getPpayFrequency(anyString(), anyString(), anyString(), anyString());
+        verify(dao, times(2)).getPpayAmount(anyString(), anyString(), anyString(), anyString());
+        verify(dao, times(2)).getriderCode(anyString(), anyString(), anyString(), anyString(), anyString());
+        // Additional assertions can be added based on the expected behavior
+    }
+}
+Make sure to include the necessary dependencies, such as JUnit 5 and Mockito, in your project for running the tests.
+
+
+
+
