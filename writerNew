@@ -48,3 +48,11 @@ when(dao.getPpayFrequency(anyString(), anyString(), anyString(), anyString())).t
 		 assertEquals(10000.0, result.getGlwbParticipantSummaryPostLockIn().getIncomeBase(), 0.001);
 		 assertEquals(200.0, result.getGlwbParticipantSummaryPostLockIn().getYtdGuaranteedAnnualWithdrawalAmount(), 0.001);
 	}
+--------------------------------------------------------------------------------------------
+
+@Test
+    void testSetJdbcTemplate() {
+        dao.setJdbcTemplate(dataSource);
+
+        verify(dataSource).getJdbcTemplate();
+    }
