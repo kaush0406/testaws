@@ -1,0 +1,14 @@
+when(dao.getPpayFrequency(anyString(), anyString(), anyString(), anyString())).thenReturn("Frequency");
+        when(dao.getPpayAmount(anyString(), anyString(), anyString(), anyString())).thenReturn("Amount");
+        when(dao.getriderCode(anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn("RiderCode");
+        when(rds.getDataSource(anyString())).thenReturn(null);
+
+        // Execute the method
+        itemWriter.write(items);
+
+        // Verify interactions
+        verify(dao, times(1)).setJdbcTemplate(null);
+        verify(dao, times(2)).getPpayFrequency(anyString(), anyString(), anyString(), anyString());
+        verify(dao, times(2)).getPpayAmount(anyString(), anyString(), anyString(), anyString());
+        verify(dao, times(2)).getriderCode(anyString(), anyString(), anyString(), anyString(), anyString());
+
