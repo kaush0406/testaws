@@ -25,3 +25,26 @@ when(dao.getPpayFrequency(anyString(), anyString(), anyString(), anyString())).t
         verify(dao).getriderCode(db, "gaId", "indId", "INCOMEFLEX-TARGET", null);
         verify(rds).getDataSource(db);
 
+
+-------------------------------------------------------------------------------------------
+
+@Test
+	public void testAccumSelect() {
+		// Prepare test data
+		ParticipantDetailsDto pptDetail = new ParticipantDetailsDto();
+		pptDetail.setBalance(1000.0);
+		PostLockInDetailsDto postLockIn = new PostLockInDetailsDto();
+		postLockIn.setGuaranteedAnnualWithdrawalAmount(500.0);
+		postLockIn.setIncomeBase(10000.0);
+		postLockIn.setYtdGuaranteedAnnualWithdrawalAmount(200.0);
+		pptDetail.setGlwbParticipantSummaryPostLockIn(postLockIn);
+		
+		// Perform the test
+		 ParticipantDetailsDto result = itemWriter.accumSelect(pptDetail);
+		 
+		 // Verify the assertions
+		 assertEquals(1000.0, result.getBalance(), 0.001);
+		 assertEquals(500.0, result.getGlwbParticipantSummaryPostLockIn().getGuaranteedAnnualWithdrawalAmount(), 0.001);
+		 assertEquals(10000.0, result.getGlwbParticipantSummaryPostLockIn().getIncomeBase(), 0.001);
+		 assertEquals(200.0, result.getGlwbParticipantSummaryPostLockIn().getYtdGuaranteedAnnualWithdrawalAmount(), 0.001);
+	}
