@@ -1,0 +1,211 @@
+package com.empowerretirement.moneyout.writer;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.file.FlatFileItemWriter;
+import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
+import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.stereotype.Component;
+
+import com.empowerretirement.moneyout.dao.Dao;
+import com.empowerretirement.moneyout.model.ParticipantDetailsDto;
+import com.empowerretirement.moneyout.model.ParticipantResponseDto;
+import com.empowerretirement.moneyout.model.PostLockInDetailsDto;
+import com.empowerretirement.moneyout.model.PptReportDto;
+import com.empowerretirement.moneyout.model.SqlResponseDto;
+import com.gwf.common.datasource.RoutingDataSource;
+
+@Component
+public class ParticipantReportItemWriter implements ItemWriter<ParticipantResponseDto> {
+
+	private static final Logger log = LoggerFactory.getLogger(ParticipantReportItemWriter.class);
+
+	@Value("#{environment.basePath}")
+	private String basePath;
+
+	@Value("${outputFolder}")
+	private String outputFolder;
+
+	private Date currDate = new Date();
+	private SimpleDateFormat formatter = new SimpleDateFormat("MMddyyyy");
+	private String currentDate = formatter.format(currDate);
+
+	private final String reportName = "IncomeFlex_Depletion_Report_" + currentDate;
+	private final String filename = reportName + ".csv";
+
+	private List<PptReportDto> listPpt = new ArrayList<>();
+
+	@Autowired
+	RoutingDataSource rds;
+
+	@Autowired
+	Dao dao;
+
+	private String ppayFreq;
+	private String ppayAmt;
+	private String riderCode;
+
+	@Override
+	public void write(List<? extends ParticipantResponseDto> items) throws Exception {
+		for (ParticipantResponseDto dto : items) {
+			String db = dto.getMyObject().getdbName();
+			dao.setJdbcTemplate(rds.getDataSource(db));
+			processParticipantDetails(dto);
+		}
+
+		writeToCsvFile();
+	}
+
+	private void processParticipantDetails(ParticipantResponseDto dto) {
+		List<ParticipantDetailsDto> participantDetails = dto.getParticipantSummaryDetails();
+		ParticipantDetailsDto pptDetailSelect = null;
+
+		if (participantDetails != null) {
+			for (ParticipantDetailsDto pptDetail : participantDetails) {
+				if (pptDetail.getLockedInStatusCode().equalsIgnoreCase("P")
+						&& pptDetail.getGlwbParticipantSummaryPostLockIn() != null) {
+					if (pptDetail.getProductSubType().equalsIgnoreCase("INCOMEFLEX-SELECT")) {
+						processIncomeFlexSelectDetails(dto, pptDetail);
+					} else if (pptDetail.getProductSubType().equalsIgnoreCase("INCOMEFLEX-TARGET")
+							&& (pptDetail.getBalance() <= 2 * pptDetail.getGlwbParticipantSummaryPostLockIn()
+									.getGuaranteedAnnualWithdrawalAmount())) {
+						processIncomeFlexTargetDetails(pptDetail, dto.getMyObject());
+					}
+				}
+			}
+
+			if (pptDetailSelect != null && (pptDetailSelect.getBalance() <= 2
+					* pptDetailSelect.getGlwbParticipantSummaryPostLockIn().getGuaranteedAnnualWithdrawalAmount())) {
+				processSelectDetails(pptDetailSelect, dto.getMyObject());
+			}
+		}
+	}
+
+	private void processIncomeFlexSelectDetails(ParticipantResponseDto dto, ParticipantDetailsDto pptDetail) {
+		String db = dto.getMyObject().getdbName();
+		String gaId = dto.getMyObject().getGaId();
+		String indId = dto.getMyObject().getIndId();
+		String productSubType = pptDetail.getProductSubType();
+		String sdioId = pptDetail.getSdioId();
+
+		ppayFreq = dao.getPpayFrequency(db, gaId, indId, productSubType);
+		ppayAmt = dao.getPpayAmount(db, gaId, indId, productSubType);
+		riderCode = dao.getriderCode(db, gaId, indId, productSubType, sdioId);
+
+		System.out.println("Desired Frequency: " + ppayFreq + " and Amount: " + ppayAmt);
+
+		ParticipantDetailsDto ppDetailSelect1 = accumSelect(pptDetail);
+		if (pptDetailSelect == null) {
+			pptDetailSelect = ppDetailSelect1;
+		}
+	}
+
+	private void processIncomeFlexTargetDetails(ParticipantDetailsDto pptDetail, SqlResponseDto myObject) {
+		PptReportDto pptTarget = processorSelectAndTarget(pptDetail, myObject);
+		pptTarget.setInstallmentPaymentFrequency(
+				dao.getPpayFrequency(myObject.getdbName(), myObject.getGaId(), myObject.getIndId(),
+						pptDetail.getProductSubType()));
+		pptTarget.setInstallmentPaymentAmounts(
+				dao.getPpayAmount(myObject.getdbName(), myObject.getGaId(), myObject.getIndId(),
+						pptDetail.getProductSubType()));
+		pptTarget.setProductVersion(
+				dao.getriderCode(myObject.getdbName(), myObject.getGaId(), myObject.getIndId(),
+						pptDetail.getProductSubType(), pptDetail.getSdioId()));
+		listPpt.add(pptTarget);
+	}
+
+	private void processSelectDetails(ParticipantDetailsDto pptDetailSelect, SqlResponseDto myObject) {
+		PptReportDto pptSelect = processorSelectAndTarget(pptDetailSelect, myObject);
+		pptSelect.setInstallmentPaymentFrequency(ppayFreq);
+		pptSelect.setInstallmentPaymentAmounts(ppayAmt);
+		pptSelect.setProductVersion(riderCode);
+		listPpt.add(pptSelect);
+	}
+
+	private ParticipantDetailsDto accumSelect(ParticipantDetailsDto pptDetail) {
+		double accumBal = 0.0;
+		double lawaAmt = 0.0;
+		double incomeBase = 0.0;
+		double YTDamt = 0.0;
+		ParticipantDetailsDto pptDetailSelect = null;
+		PostLockInDetailsDto postlockinSelect = null;
+
+		accumBal = accumBal + pptDetail.getBalance();
+		log.debug("accumBal: " + accumBal);
+		lawaAmt = pptDetail.getGlwbParticipantSummaryPostLockIn().getGuaranteedAnnualWithdrawalAmount();
+		incomeBase = pptDetail.getGlwbParticipantSummaryPostLockIn().getIncomeBase();
+		YTDamt = pptDetail.getGlwbParticipantSummaryPostLockIn().getYtdGuaranteedAnnualWithdrawalAmount();
+		PostLockInDetailsDto pptlockin = pptDetail.getGlwbParticipantSummaryPostLockIn();
+
+		if (pptDetailSelect == null) {
+			pptDetailSelect = pptDetail;
+			if (postlockinSelect == null) {
+				postlockinSelect = pptlockin;
+			}
+		}
+
+		postlockinSelect.setGuaranteedAnnualWithdrawalAmount(lawaAmt);
+		postlockinSelect.setIncomeBase(incomeBase);
+		postlockinSelect.setYtdGuaranteedAnnualWithdrawalAmount(YTDamt);
+		pptDetailSelect.setBalance(accumBal);
+		pptDetailSelect.setGlwbParticipantSummaryPostLockIn(postlockinSelect);
+
+		return pptDetailSelect;
+	}
+
+	private PptReportDto processorSelectAndTarget(ParticipantDetailsDto pptDetail, SqlResponseDto myObject) {
+		PptReportDto ppt = new PptReportDto();
+		String planName = "\"" + myObject.getPlanName() + "\"";
+		ppt.setDatabase(myObject.getdbName());
+		ppt.setPlanNumber(myObject.getGaId());
+		ppt.setPlanName(planName);
+		ppt.setSsn(myObject.getSsn());
+		ppt.setSsnExtension(myObject.getSsnExt());
+		ppt.setPptFirstName(myObject.getFirstName());
+		ppt.setPptLastName(myObject.getLastName());
+		ppt.setAccountBalance(pptDetail.getBalance());
+		ppt.setBalanceEffectiveDate(pptDetail.getGlwbParticipantSummaryPostLockIn().getEffectiveDate());
+		ppt.setLawa(pptDetail.getGlwbParticipantSummaryPostLockIn().getGuaranteedAnnualWithdrawalAmount());
+		ppt.setIncomeBase(pptDetail.getGlwbParticipantSummaryPostLockIn().getIncomeBase());
+		ppt.setYtdAmount(pptDetail.getGlwbParticipantSummaryPostLockIn().getYtdGuaranteedAnnualWithdrawalAmount());
+		ppt.setDob(myObject.getBirthDate());
+
+		return ppt;
+	}
+}
+private void writeToCsvFile(List<PptReportDto> listPpt, String basePath, String outputFolder, String filename) {
+    FlatFileItemWriter<PptReportDto> writer = new FlatFileItemWriter<>();
+    String myBasePath = new StringBuilder(basePath).append(outputFolder).toString();
+    String absoluteFileName = myBasePath.concat(filename);
+    writer.setResource(new FileSystemResource(absoluteFileName));
+    System.setProperty("fileName", absoluteFileName);
+    log.debug(String.format("writer myBasePath: %s :: absoluteFileName: %s", myBasePath, absoluteFileName));
+    log.info(String.format("writer myBasePath: %s :: absoluteFileName: %s", myBasePath, absoluteFileName));
+    writer.setHeaderCallback(writer1 -> writer1.write(
+            "DATABASE, PLAN NUMBER, PLAN NAME, SSN, SSN EXTENSION, FIRST NAME, LAST NAME, PRODUCT VERSION, CURRENT ACCOUNT BALANCE, BALANCE EFFECTIVE DATE, LAWA AMOUNT, INCOME BASE, YTD WITHDRAWAL AMOUNT, DOB, PPAY_FREQUENCY, PPAY_AMOUNT"
+    ));
+    writer.setLineAggregator(new DelimitedLineAggregator<PptReportDto>());
+    DelimitedLineAggregator<PptReportDto> lineAggregator = new DelimitedLineAggregator<>();
+    lineAggregator.setDelimiter(",");
+    lineAggregator.setFieldExtractor(new BeanWrapperFieldExtractor<PptReportDto>());
+
+    BeanWrapperFieldExtractor<PptReportDto> fieldExtractor = new BeanWrapperFieldExtractor<>();
+    fieldExtractor.setNames(new String[]{"database", "planNumber", "planName", "ssn", "ssnExtension", "pptFirstName",
+            "pptLastName", "productVersion", "accountBalance", "balanceEffectiveDate", "lawa", "incomeBase",
+            "ytdAmount", "dob", "installmentPaymentFrequency", "installmentPaymentAmounts"});
+    lineAggregator.setFieldExtractor(fieldExtractor);
+    writer.setLineAggregator(lineAggregator);
+    writer.open(new ExecutionContext());
+    writer.write(listPpt);
+    writer.close();
+}
