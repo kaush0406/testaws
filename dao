@@ -1,0 +1,115 @@
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+class DaoTest {
+
+    @Mock
+    private NamedParameterJdbcTemplate template;
+
+    @InjectMocks
+    private Dao dao;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    void getPpayFrequency_WhenQueryReturnsResult_ShouldReturnPpayFrequency() {
+        // Arrange
+        String expectedPpayFreq = "Monthly";
+        when(template.queryForObject(any(), any(), eq(String.class)))
+                .thenReturn(expectedPpayFreq);
+
+        // Act
+        String actualPpayFreq = dao.getPpayFrequency("db", "gaId", "indId", "prodSubtype");
+
+        // Assert
+        assertEquals(expectedPpayFreq, actualPpayFreq);
+        verify(template, times(1)).queryForObject(any(), any(), eq(String.class));
+    }
+
+    @Test
+    void getPpayFrequency_WhenQueryThrowsEmptyResultDataAccessException_ShouldReturnNull() {
+        // Arrange
+        when(template.queryForObject(any(), any(), eq(String.class)))
+                .thenThrow(EmptyResultDataAccessException.class);
+
+        // Act
+        String actualPpayFreq = dao.getPpayFrequency("db", "gaId", "indId", "prodSubtype");
+
+        // Assert
+        assertNull(actualPpayFreq);
+        verify(template, times(1)).queryForObject(any(), any(), eq(String.class));
+    }
+
+    @Test
+    void getPpayAmount_WhenQueryReturnsResult_ShouldReturnPpayAmount() {
+        // Arrange
+        String expectedPpayAmt = "1000";
+        when(template.queryForObject(any(), any(), eq(String.class)))
+                .thenReturn(expectedPpayAmt);
+
+        // Act
+        String actualPpayAmt = dao.getPpayAmount("db", "gaId", "indId", "prodSubtype");
+
+        // Assert
+        assertEquals(expectedPpayAmt, actualPpayAmt);
+        verify(template, times(1)).queryForObject(any(), any(), eq(String.class));
+    }
+
+    @Test
+    void getPpayAmount_WhenQueryThrowsEmptyResultDataAccessException_ShouldReturnNull() {
+        // Arrange
+        when(template.queryForObject(any(), any(), eq(String.class)))
+                .thenThrow(EmptyResultDataAccessException.class);
+
+        // Act
+        String actualPpayAmt = dao.getPpayAmount("db", "gaId", "indId", "prodSubtype");
+
+        // Assert
+        assertNull(actualPpayAmt);
+        verify(template, times(1)).queryForObject(any(), any(), eq(String.class));
+    }
+
+    @Test
+    void getriderCode_WhenQueryReturnsResult_ShouldReturnRiderCode() {
+        // Arrange
+        String expectedRiderCode = "ABC123";
+        when(template.queryForObject(any(), any(), eq(String.class)))
+                .thenReturn(expectedRiderCode);
+
+        // Act
+        String actualRiderCode = dao.getriderCode("db", "gaId", "indId", "prodSubtype", "sdioId");
+
+        // Assert
+        assertEquals(expectedRiderCode, actualRiderCode);
+        verify(template, times(1)).queryForObject(any(), any(), eq(String.class));
+    }
+
+    @Test
+    void getriderCode_WhenQueryThrowsEmptyResultDataAccessException_ShouldReturnNull() {
+        // Arrange
+        when(template.queryForObject(any(), any(), eq(String.class)))
+                .thenThrow(EmptyResultDataAccessException.class);
+
+        // Act
+        String actualRiderCode = dao.getriderCode("db", "gaId", "indId", "prodSubtype", "sdioId");
+
+        // Assert
+        assertNull(actualRiderCode);
+        verify(template, times(1)).queryForObject(any(), any(), eq(String.class));
+    }
+}
