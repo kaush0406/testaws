@@ -200,3 +200,80 @@ public class ParticipantReportItemWriter implements ItemWriter<ParticipantRespon
         <artifactId>s3</artifactId>
         <version>2.17.84</version>
     </dependency>
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+
+import com.empowerretirement.moneyout.dao.Dao;
+import com.empowerretirement.moneyout.model.PpayDetailsDto;
+
+public class DaoTest {
+
+    private Dao dao;
+    private NamedParameterJdbcTemplate template;
+
+    @BeforeEach
+    public void setup() {
+        // Create a mock DataSource and NamedParameterJdbcTemplate
+        DataSource dataSource = mock(DataSource.class);
+        template = mock(NamedParameterJdbcTemplate.class);
+
+        // Create the Dao instance
+        dao = new Dao();
+        dao.setJdbcTemplate(dataSource);
+        dao.template = template;
+    }
+
+    @Test
+    public void testGetPpayDetails() {
+        // Prepare test data
+        String gaId = "GA001";
+        String indId = "IND001";
+        String prodSubtype = "INCOMEFLEX-SELECT";
+
+        PpayDetailsDto expectedResult = new PpayDetailsDto();
+        expectedResult.setPpayFrequency("MONTHLY");
+        expectedResult.setPpayAmount("1000");
+
+        // Configure the mock template to return the expected result
+        when(template.queryForObject(
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.anyMap(),
+                ArgumentMatchers.any(Dao.PpayResponseRowMapper.class)))
+                .thenReturn(expectedResult);
+
+        // Call the method under test
+        PpayDetailsDto actualResult = dao.getPpayDetails("db", gaId, indId, prodSubtype);
+
+        // Verify the interaction and assert the result
+        Map<String, String> expectedParams = new HashMap<>();
+        expectedParams.put("gaId", gaId);
+        expectedParams.put("indId", indId);
+        expectedParams.put("prodSubtype", prodSubtype);
+
+        Mockito.verify(template).queryForObject(
+                ArgumentMatchers.eq(CommonConstants.PPAY_FETCH_QUERY),
+                ArgumentMatchers.eq(expectedParams),
+                ArgumentMatchers.any(Dao.PpayResponseRowMapper.class));
+
+        assertEquals(expectedResult.getPpayFrequency(), actualResult.getPpayFrequency());
+        assertEquals(expectedResult.getPpayAmount(), actualResult.getPpayAmount());
+    }
+}
