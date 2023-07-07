@@ -75,3 +75,32 @@ class IncomeFlexRestClientTest {
         assertEquals(refreshedToken, incomeFlexRestClient.jwtToken);
     }
 }
+
+
+ @Test
+    void testGetIncomeFlexInfo_FirstTimeTokenSet() {
+        // Set jwtToken to null to simulate the first-time token set
+        incomeFlexRestClient.jwtToken = null;
+
+        // Mock the response entity
+        String responseBody = "Response Body";
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(responseBody, HttpStatus.OK);
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(responseEntity);
+
+        // Mock the token provider
+        String jwtToken = "dummy-token";
+        when(securityRestClient.jwtProvider()).thenReturn(jwtToken);
+
+        // Call the method under test
+        String result = incomeFlexRestClient.getIncomeFlexInfo("indId", "gaId", "dbName");
+
+        // Verify the interactions and assertions
+        verify(restTemplate, times(1))
+                .exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        verify(securityRestClient, times(1)).jwtProvider();
+
+        assertEquals(responseBody, result);
+        assertEquals(jwtToken, incomeFlexRestClient.jwtToken);
+    }
+}
