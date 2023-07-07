@@ -104,3 +104,89 @@ class IncomeFlexRestClientTest {
         assertEquals(jwtToken, incomeFlexRestClient.jwtToken);
     }
 }
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+  @Test
+    void testGetIncomeFlexInfo_Success() {
+        // ... Existing test code ...
+
+        // Call the method under test
+        String result = incomeFlexRestClient.getIncomeFlexInfo("indId", "gaId", "dbName");
+
+        // Verify the interactions and assertions
+        verify(restTemplate, times(1))
+                .exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+
+        assertEquals(responseBody, result);
+    }
+
+    @Test
+    void testGetIncomeFlexInfo_UnauthorizedRetry() {
+        // ... Existing test code ...
+
+        // Call the method under test
+        String result = incomeFlexRestClient.getIncomeFlexInfo("indId", "gaId", "dbName");
+
+        // Verify the interactions and assertions
+        verify(restTemplate, times(2))
+                .exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        verify(securityRestClient, times(1)).jwtProvider();
+
+        assertEquals("Success", result);
+        assertEquals(refreshedToken, incomeFlexRestClient.jwtToken);
+    }
+
+    @Test
+    void testGetIncomeFlexInfo_ExceptionThrown() {
+        // ... Existing test code ...
+
+        // Call the method under test and assert the exception
+        assertThrows(IncomeFlexRestClient.class,
+                () -> incomeFlexRestClient.getIncomeFlexInfo("indId", "gaId", "dbName"));
+
+        verify(restTemplate, times(1))
+                .exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    void testGetIncomeFlexInfo_FirstTimeTokenSet() {
+        // ... Existing test code ...
+
+        // Call the method under test
+        String result = incomeFlexRestClient.getIncomeFlexInfo("indId", "gaId", "dbName");
+
+        // Verify the interactions and assertions
+        verify(restTemplate, times(1))
+                .exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        verify(securityRestClient, times(1)).jwtProvider();
+
+        assertEquals(responseBody, result);
+        assertEquals(jwtToken, incomeFlexRestClient.jwtToken);
+    }
+
+    @Test
+    void testGetIncomeFlexInfo_UnauthorizedExceptionHandling() {
+        // Mock the unauthorized exception
+        HttpClientErrorException unauthorizedException =
+                new HttpClientErrorException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(unauthorizedException);
+
+        // Mock the token provider
+        String refreshedToken = "refreshed-token";
+        when(securityRestClient.jwtProvider()).thenReturn(refreshedToken);
+
+        // Call the method under test
+        String result = incomeFlexRestClient.getIncomeFlexInfo("indId", "gaId", "dbName");
+
+        // Verify the interactions and assertions
+        verify(restTemplate, times(2))
+                .exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+        verify(securityRestClient, times(1)).jwtProvider();
+
+        assertEquals("Success", result);
+        assertEquals(refreshedToken, incomeFlexRestClient.jwtToken);
+    }
+}
