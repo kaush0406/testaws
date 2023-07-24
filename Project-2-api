@@ -1,0 +1,29 @@
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public static String extractValueFromJsonResponse(User inUser, ParticipantTokenVO aParticipantTokenVO, String fieldName) {
+    String jsonResponse = getLoanPaymentMoneyOutGiAct(inUser, aParticipantTokenVO);
+
+    if (jsonResponse != null && !jsonResponse.isEmpty()) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(jsonResponse);
+
+            // Check if the response contains the specified field
+            if (jsonNode.has(fieldName)) {
+                JsonNode fieldValue = jsonNode.get(fieldName);
+                return fieldValue.asText(); // Return the field value as a String
+            } else {
+                // Handle the case where the specified field is not found in the response
+                return null;
+            }
+        } catch (Exception e) {
+            // Handle JSON parsing or other exceptions here
+            e.printStackTrace();
+            return null;
+        }
+    } else {
+        // Handle the case where the response is null or empty
+        return null;
+    }
+}
