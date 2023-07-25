@@ -1,0 +1,41 @@
+private DisbReasonVO[] filterDisbursementReasonsForIndustryWithdrawal(
+        ParticipantTokenVO inPart,
+        DisbMethodVO inMethod,
+        DisbReasonVO[] inReasons
+) {
+    ArrayList<DisbReasonVO> aList = new ArrayList<DisbReasonVO>();
+    theLogger.debug("Entering filterDisbursementReasonsForIndustryWithdrawal");
+
+    for (int i = 0; i < inReasons.length; i++) {
+        DisbReasonVO aReason = null;
+
+        if (inReasons[i].getCode().equals(DisbReasonVO.INDUSTRY)) {
+            if (DisbursementDao.disbursementRuleExists(DisbReasonVO.INDUSTRY,
+                    new String[]{DisbursementAvailableAmount.INDUSTRY_WITHDRAWAL_AVAILABLE_REASON},
+                    inMethod,
+                    inReasons[i],
+                    inPart.getGAId())) {
+                theLogger.debug("The rule for INDUSTRY reason exists");
+                aReason = inReasons[i];
+            }
+        } else {
+            theLogger.debug("This reason does not apply to Industry Withdrawal rules");
+            aReason = inReasons[i];
+        }
+
+        if (aReason != null) {
+            if (theLogger.isDebugEnabled()) {
+                theLogger.debug("Adding the reason " + aReason.toString()
+                        + " to the list");
+            }
+
+            aList.add(aReason);
+        }
+    }
+
+    DisbReasonVO[] outReasons = new DisbReasonVO[aList.size()];
+    outReasons = aList.toArray(outReasons);
+    theLogger.debug("Leaving filterDisbursementReasonsForIndustryWithdrawal");
+
+    return outReasons;
+}
