@@ -134,5 +134,25 @@ Fetch the list of DisbursementAvlAmtWithRestrcVO based on the provided parameter
 Return the list of DisbursementAvlAmtWithRestrcVO.
 
 
+------------------------
+
+
+User inUser: The User object representing the user making the request.
+ParticipantTokenVO aParticipantTokenVO: A data object containing information about the participant, including the participant's unique token or identifier.
+Return:
+
+String: The last contribution date in string format.
+Steps:
+
+Extract participantId from aParticipantTokenVO to identify the participant.
+Use inUser and other relevant parameters to retrieve and validate the user's access and permissions for performing the operation.
+Make an API call to fetch the last contribution date for the participant identified by participantId.
+Return the response, i.e., the last contribution date in string format.
+
+
+
+
+
+
 
 
