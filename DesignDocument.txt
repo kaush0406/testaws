@@ -1,0 +1,105 @@
+# Design Document: Suppress Inservice Withdrawal Options for Industry Withdrawal Eligible Participants
+
+## 1. Epic Overview
+The goal of this epic is to suppress all Inservice Withdrawal options from being displayed on the App for participants who are eligible for an Industry Withdrawal. The App should only show the Industry Withdrawal option as the available distribution option for such participants.
+
+## 2. Solution Overview
+To achieve the objective of suppressing Inservice Withdrawal options, we will implement a new function called `filterDisbursementReasonsForIndustryWithdrawal` within the `DisbursementFacade`. This function will filter out the Inservice Withdrawal reasons based on three conditions:
+
+1. The plan is a Taft-Hartley plan.
+2. The maximum withdrawal amount for the Industry Withdrawal reason is greater than 0.
+3. The participant has a last contribution date.
+
+Let's break down the implementation of each of these conditions:
+
+### 2.1. Condition 1 - Check for Taft-Hartley Plan
+We will implement a function in `DisbursementDao` called `getTaftHartleyPlans`. This function will call a SQL block named `GET_TAFT_HARTLEY_PLAN`, which will return 'Y' if the plan is a Taft-Hartley plan, otherwise 'N'.
+
+### 2.2. Condition 2 - Check for Maximum Withdrawal Amount
+We will use an existing function from `QjsaUtil` called `getPartMaxAvailWithRestrictions`. This function, in turn, will call the `DisbSupportFacade` to retrieve a list of `DisbursementAvlAmtWithRestrcVO`. To filter the maximum amount for the Industry Withdrawal reason from the list, we will create another function in `DisbursementFacade` called `isMaxAvailable`. This function will take the list of `DisbursementAvlAmtWithRestrcVO` and the `disbReason` as parameters and return a boolean indicating if the maximum amount is greater than 0.
+
+### 2.3. Condition 3 - Fetch Last Contribution Date
+To fetch the last contribution date, we will create a function in `MoneyOutServiceHelper` called `fetchLastContributionDate`. This function will make an API call and return the response in string format. In the `DisbursementFacade`, we will extract the last contribution date from the API response and store it in `lastContributionDateValue`.
+
+### 2.4. Final Implementation
+After performing all three checks, the `filterDisbursementReasonsForIndustryWithdrawal` function will be called. If all conditions are met, the function will filter out the Inservice Withdrawal options, leaving only the Industry Withdrawal option to be displayed on the App.
+
+## 3. Function Details
+
+### 3.1. `DisbursementFacade.filterDisbursementReasonsForIndustryWithdrawal`
+Function to filter out Inservice Withdrawal options and return only Industry Withdrawal as the available distribution option for eligible participants.
+
+**Parameters:**
+- `participantId` (String): The unique identifier for the participant.
+
+**Return:**
+- `List<DisbursementReason>`: The filtered list of disbursement reasons, containing only Industry Withdrawal if eligible.
+
+**Steps:**
+1. Call `DisbursementDao.getTaftHartleyPlans` to check if the plan is a Taft-Hartley plan.
+2. If the plan is not a Taft-Hartley plan, return the original list of disbursement reasons without further filtering.
+3. If the plan is a Taft-Hartley plan:
+   a. Call `QjsaUtil.getPartMaxAvailWithRestrictions` to get the list of `DisbursementAvlAmtWithRestrcVO`.
+   b. Call `DisbursementFacade.isMaxAvailable` for each reason in the list to check if the maximum amount is greater than 0. Keep only the reasons with a positive maximum amount.
+   c. Call `MoneyOutServiceHelper.fetchLastContributionDate` to get the last contribution date for the participant.
+   d. If the last contribution date is not null:
+      i. Filter out all Inservice Withdrawal reasons from the list.
+      ii. Return the filtered list with only the Industry Withdrawal reason.
+
+### 3.2. `DisbursementDao.getTaftHartleyPlans`
+Function to determine if the plan is a Taft-Hartley plan.
+
+**Parameters:**
+- None
+
+**Return:**
+- `String`: 'Y' if the plan is a Taft-Hartley plan, 'N' otherwise.
+
+**Steps:**
+1. Execute the SQL block `GET_TAFT_HARTLEY_PLAN`.
+2. Return the result indicating if it's a Taft-Hartley plan.
+
+### 3.3. `QjsaUtil.getPartMaxAvailWithRestrictions`
+Function to get a list of `DisbursementAvlAmtWithRestrcVO`.
+
+**Parameters:**
+- `participantId` (String): The unique identifier for the participant.
+
+**Return:**
+- `List<DisbursementAvlAmtWithRestrcVO>`: The list of available amounts with restrictions for disbursement.
+
+**Steps:**
+1. Call `DisbSupportFacade` to retrieve the list of `DisbursementAvlAmtWithRestrcVO`.
+2. Return the list.
+
+### 3.4. `DisbursementFacade.isMaxAvailable`
+Function to check if the maximum amount for a specific disbursement reason is greater than 0.
+
+**Parameters:**
+- `disbursementAmounts` (List<DisbursementAvlAmtWithRestrcVO>): The list of available amounts with restrictions for disbursement.
+- `disbReason` (DisbursementReason): The specific disbursement reason to check.
+
+**Return:**
+- `boolean`: `true` if the maximum amount is greater than 0, `false` otherwise.
+
+**Steps:**
+1. Loop through the `disbursementAmounts` list.
+2. For each item, check if the `disbReason` matches the reason in the item.
+3. If there is a match, return `true` if the maximum amount is greater than 0, otherwise return `false`.
+4. If no match is found, return `false`.
+
+### 3.5. `MoneyOutServiceHelper.fetchLastContributionDate`
+Function to fetch the last contribution date for a participant.
+
+**Parameters:**
+- `participantId` (String): The unique identifier for the participant.
+
+**Return:**
+- `String`: The last contribution date in string format.
+
+**Steps:**
+1. Make an API call to fetch the last contribution date for the participant.
+2. Return the response in string format.
+
+## 4. Conclusion
+With the implementation of the proposed functions and checks, we will successfully suppress all Inservice Withdrawal options from being displayed on the App for participants who are eligible for an Industry Withdrawal. The App will present only the Industry Withdrawal as the available distribution option for such participants, ensuring a smooth user experience and adherence to plan-specific rules.
