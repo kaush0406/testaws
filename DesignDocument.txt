@@ -103,3 +103,13 @@ Function to fetch the last contribution date for a participant.
 
 ## 4. Conclusion
 With the implementation of the proposed functions and checks, we will successfully suppress all Inservice Withdrawal options from being displayed on the App for participants who are eligible for an Industry Withdrawal. The App will present only the Industry Withdrawal as the available distribution option for such participants, ensuring a smooth user experience and adherence to plan-specific rules.
+
+
+
+-------------------------------------------
+ParticipantTokenVO inPart: A data object containing information about the participant, including the participant's unique token or identifier.
+DisbMethodVO inMethod: A data object containing information about the disbursement method selected by the participant.
+DisbReasonVO[] inReasons: An array of data objects representing the available disbursement reasons for the participant.
+Return:
+
+DisbReasonVO[]: The filtered array of disbursement reasons, containing only the Industry Withdrawal reason if the participant is eligible.
