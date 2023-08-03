@@ -113,3 +113,26 @@ DisbReasonVO[] inReasons: An array of data objects representing the available di
 Return:
 
 DisbReasonVO[]: The filtered array of disbursement reasons, containing only the Industry Withdrawal reason if the participant is eligible.
+
+
+
+------------------------------------------
+
+User inUser: The User object representing the user making the request.
+ParticipantTokenVO inPart: A data object containing information about the participant, including the participant's unique token or identifier.
+DisbReasonVO disbRsnVO: A data object representing the specific disbursement reason for which to retrieve the available amounts with restrictions.
+DisbMethodVO disbMethod: A data object containing information about the selected disbursement method.
+List<DisbReqVestingVO> inDisbReqVestingVOs: A list of data objects representing the vesting details for the participant's disbursement request.
+Return:
+
+List<DisbursementAvlAmtWithRestrcVO>: The list of available amounts with restrictions for disbursement.
+Steps:
+
+Extract participantId from inPart to identify the participant.
+Use inUser and other relevant parameters to retrieve and validate the user's access and permissions for performing the disbursement operation.
+Fetch the list of DisbursementAvlAmtWithRestrcVO based on the provided parameters, including disbRsnVO, disbMethod, and inDisbReqVestingVOs.
+Return the list of DisbursementAvlAmtWithRestrcVO.
+
+
+
+
