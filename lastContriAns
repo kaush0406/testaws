@@ -1,0 +1,29 @@
+if (response.getStatusCode().is2xxSuccessful()) {
+        String jsonResponse = response.getBody();
+        String lastContributionDateValue = null;
+        if (jsonResponse != null && !jsonResponse.isEmpty()) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode jsonNode = objectMapper.readTree(jsonResponse);
+
+                if (jsonNode.has("lastContributionDate")) {
+                    JsonNode fieldValue = jsonNode.get("lastContributionDate");
+                    lastContributionDateValue = fieldValue.asText();
+                }
+            } catch (Exception e) {
+                // Handle JSON parsing or other exceptions here
+                String msg = String.format(e.getMessage());
+                theLogger.debug("Entering fetchLastContributionDate : Catch Block " + msg);
+                e.printStackTrace();
+                lastContributionDateValue = null;
+            }
+        }
+
+        // Return the lastContributionDateValue, which will be null if it wasn't found in the JSON
+        return lastContributionDateValue;
+    } else {
+        // Handle non-successful response here, such as logging an error or throwing an exception
+        // For now, let's return null to indicate failure
+        return null;
+    }
+}
