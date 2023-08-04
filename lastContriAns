@@ -27,3 +27,31 @@ if (response.getStatusCode().is2xxSuccessful()) {
         return null;
     }
 }
+
+
+-------------------------------------------------------------
+
+public static String getTaftHartleyPlans(ParticipantTokenVO inPart) {
+    String plan = null;
+
+    theLogger.debug("DisbursementDao: getTaftHartleyPlans called");
+
+    try {
+        SqlDefinition aDef = new SqlDefinition(DisbursementDao.GET_TAFT_HARTLEY_PLAN,
+                                               new SqlParam[] { new SqlParam(inPart.getGaId()) },
+                                               inPart.getDatabaseVO());
+
+        plan = IsisSqlUtil.getFirstColumn(aDef);
+
+        theLogger.debug("DisbursementDao: returned with " + plan);
+    } catch (Exception ex) {
+        // Handle the exception
+        theLogger.error("An error occurred while executing getTaftHartleyPlans: " + ex.getMessage());
+        // Optionally, you can rethrow the exception if you want to propagate it to the caller.
+        // throw ex;
+    } finally {
+        theLogger.debug("DisbursementDao: leaving getTaftHartleyPlans");
+    }
+
+    return plan;
+}
