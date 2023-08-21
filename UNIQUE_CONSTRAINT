@@ -1,0 +1,15 @@
+SELECT cols.column_name
+FROM all_constraints cons
+JOIN all_cons_columns cols
+ON cons.constraint_name = cols.constraint_name
+WHERE cons.table_name = 'DOC_SEL'
+AND cons.constraint_type = 'P';
+
+
+
+SELECT cols.column_name
+FROM all_constraints cons
+JOIN all_cons_columns cols
+ON cons.constraint_name = cols.constraint_name
+WHERE cons.table_name = 'DOC_SEL'
+AND cons.constraint_type = 'U';
