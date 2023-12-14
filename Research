@@ -1,0 +1,1 @@
+distributionService.forceLoanOffset = disbType.forceLoanOffSetInd ? disbType.forceLoanOffSetInd : '';
